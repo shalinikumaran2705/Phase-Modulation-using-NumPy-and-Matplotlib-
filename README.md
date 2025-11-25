@@ -1,4 +1,4 @@
-# EVALUATION OF FREQUENCY DIVISION MULTIPLEXING
+# Frequency-Division-Multiplexing---Modulation-and-Demodulation-using-Python
 ### Aim:
 To study Frequency Division Multiplexing (FDM) using SCILAB by modulating multiple message signals onto different carrier frequencies and recovering them using demodulation filters.
 ### Apparatus Required:
