@@ -1,112 +1,131 @@
-# Phase-Modulation-using-NumPy-and-Matplotlib-
-__Aim:__ 
-To implement and analyze phase modulation (PM) using Python's NumPy and Matplotlib libraries. 
+# EVALUATION OF FREQUENCY DIVISION MULTIPLEXING
+### Aim:
+To study Frequency Division Multiplexing (FDM) using SCILAB by modulating multiple message signals onto different carrier frequencies and recovering them using demodulation filters.
+### Apparatus Required:
+SCILAB software
+### Theory:
+Frequency Division Multiplexing (FDM) is a technique where multiple message signals are transmitted simultaneously over a single communication channel by assigning each message a unique carrier frequency.
 
-__Apparatus Required:__ 
-1. Software: Python with NumPy and Matplotlib libraries 
-2. Hardware: Personal Computer
+Each message is modulated using amplitude modulation (AM/DSB-SC) with a different carrier.
 
-   __Theory:__
-   Phase Modulation (PM) is a technique where the phase of the carrier wave is varied in proportion to the 
-instantaneous amplitude of the input signal (message signal). Unlike frequency modulation, where the frequency 
-is varied, in phase modulation, the phase angle of the carrier wave changes with the amplitude of the message 
-signal.
+These modulated signals occupy non-overlapping frequency bands, allowing them to be added together to form a composite FDM signal.
 
-__Algorithm:__
+At the receiver, band-pass filters are used to extract individual channels.
 
-  1   Initialize Parameters:
-     Set values for carrier amplitude (Ac), carrier frequency (fc), message frequency (fm), sampling frequency,and phase deviation sensitivity (kpk).   
-   
-  2. Generate Time Axis: 
-   Create a time vector for the signal duration based on the sampling frequency.
-   
- 3. Generate Message Signal: 
-   Define the message signal as a cosine wave.
-   
- 4. Generate PM Signal: 
-   Apply the PM modulation formula to obtain the modulated signal.
-   
- 5. Plot the Signals: 
-   Use Matplotlib to plot the message signal, carrier signal, and phase-modulated signal.
+Each extracted signal is then demodulated to recover the original message.
+
+FDM is widely used in radio broadcasting, cable TV, and telecommunication links.
+
+### Algorithm
+FDM Modulation Algorithm:
+Input:
+
+• 5 message signals: m1(t), m2(t), m3(t), m4(t), m5(t)
+• Time vector t
+• 5 different carrier frequencies
+
+#### Steps:
+
+Initialize the parameters such as sampling frequency, time duration, and number of channels.
+
+Generate five message signals with different baseband frequencies.
+
+Assign a unique carrier frequency to each message to avoid overlapping bands.
+
+Modulate each message signal using its respective carrier signal (multiplication).
+
+Add all modulated signals to obtain the FDM composite signal.
+
+At the receiver, apply band-pass filters, each tuned to one carrier band.
+
+Demodulate each extracted signal to recover the original messages.
+
+Plot the original, modulated, composite, and recovered signals.
 
 __Program:__ 
 
 ```
-clc;
-clear;
-close;
+Fs = 56300;
+t = 0:1/Fs:0.02;
 
-fs = 50000;                       // Sampling frequency
-t = 0:1/fs:0.01;                  // Time duration
-N = 5;                            // Number of channels
+m1 = sin(2*%pi*200*t);
+m2 = sin(2*%pi*300*t);
+m3 = sin(2*%pi*400*t);
+m4 = sin(2*%pi*500*t);
+m5 = sin(2*%pi*600*t);
+m6 = sin(2*%pi*700*t);
 
-// Baseband message frequencies
-msg_freq = [120, 240, 340, 500, 800];
+c1 = 3000; c2 = 6000; c3 = 9000; c4 = 12000; c5 = 15000; c6 = 18000;
 
-// Carrier frequencies for FDM
-carrier_freq = [3000, 6000, 9000, 12000, 15000];
+carrier1 = cos(2*%pi*c1*t);
+carrier2 = cos(2*%pi*c2*t);
+carrier3 = cos(2*%pi*c3*t);
+carrier4 = cos(2*%pi*c4*t);
+carrier5 = cos(2*%pi*c5*t);
+carrier6 = cos(2*%pi*c6*t);
 
-messages = zeros(N, length(t));
-carriers = zeros(N, length(t));
-modulated = zeros(N, length(t));
+s1 = m1 .* carrier1;
+s2 = m2 .* carrier2;
+s3 = m3 .* carrier3;
+s4 = m4 .* carrier4;
+s5 = m5 .* carrier5;
+s6 = m6 .* carrier6;
 
-// Generate message and carrier signals
-for i = 1:N
-    messages(i, :) = sin(2 * %pi * msg_freq(i) * t);
-    carriers(i, :) = cos(2 * %pi * carrier_freq(i) * t);
-    modulated(i, :) = messages(i, :) .* carriers(i, :); 
-end
+s_total = s1 + s2 + s3 + s4 + s5 + s6;
 
-// FDM composite signal
-fdm_signal = sum(modulated, "r");
+// Demultiplex: multiply by carriers to shift each band back to baseband
+r1 = s_total .* carrier1;
+r2 = s_total .* carrier2;
+r3 = s_total .* carrier3;
+r4 = s_total .* carrier4;
+r5 = s_total .* carrier5;
+r6 = s_total .* carrier6;
 
-// Demodulation
-demodulated = zeros(N, length(t));
+// Simple FFT-based ideal low-pass filter (avoids butter/toolbox issues)
+function y = ideal_lowpass_fft(x, Fs, fc)
+    N = length(x);
+    X = fft(x);
+    f = Fs*(0:N-1)/N;
+    mask = (f <= fc) | (f >= Fs-fc);
+    Y = X .* mask;
+    y = real(ifft(Y));
+endfunction
 
-for i = 1:N
-    demodulated(i, :) = fdm_signal .* carriers(i, :);  // Multiply by same carrier
-end
+fc = 1000;
+dm1 = ideal_lowpass_fft(r1, Fs, fc);
+dm2 = ideal_lowpass_fft(r2, Fs, fc);
+dm3 = ideal_lowpass_fft(r3, Fs, fc);
+dm4 = ideal_lowpass_fft(r4, Fs, fc);
+dm5 = ideal_lowpass_fft(r5, Fs, fc);
+dm6 = ideal_lowpass_fft(r6, Fs, fc);
 
-// Plotting section
+figure(1);
+subplot(3,2,1); plot(t,m1); title("Message Signal 1");
+subplot(3,2,2); plot(t,m2); title("Message Signal 2");
+subplot(3,2,3); plot(t,m3); title("Message Signal 3");
+subplot(3,2,4); plot(t,m4); title("Message Signal 4");
+subplot(3,2,5); plot(t,m5); title("Message Signal 5");
+subplot(3,2,6); plot(t,m6); title("Message Signal 6");
 
-// Original messages
-scf(1);
-for i = 1:N
-    subplot(N,1,i);
-    plot(t, messages(i,:));
-    xtitle("Original Message Signal " + string(i));
-    ylabel("Amplitude");
-    if i == N then xlabel("Time (s)"); end
-end
+figure(2);
+plot(t, s_total); title("Multiplexed FDM Signal");
 
-// FDM Composite Signal
-scf(2);
-plot(t, fdm_signal);
-xtitle("FDM Composite Signal");
-xlabel("Time (s)");
-ylabel("Amplitude");
-
-// Demodulated Signals
-scf(3);
-for i = 1:N
-    subplot(N,1,i);
-    plot(t, demodulated(i,:));
-    xtitle("Demodulated Signal " + string(i));
-    ylabel("Amplitude");
-    if i == N then xlabel("Time (s)"); end
-end
+figure(3);
+subplot(3,2,1); plot(t,dm1); title("Recovered Signal 1");
+subplot(3,2,2); plot(t,dm2); title("Recovered Signal 2");
+subplot(3,2,3); plot(t,dm3); title("Recovered Signal 3");
+subplot(3,2,4); plot(t,dm4); title("Recovered Signal 4");
+subplot(3,2,5); plot(t,dm5); title("Recovered Signal 5");
+subplot(3,2,6); plot(t,dm6); title("Recovered Signal 6");
 ```
-
-
 
 __Output:__ 
 
+![WhatsApp Image 2025-11-25 at 10 51 40_a6cf0d20](https://github.com/user-attachments/assets/10ded3e6-bba6-4d91-be67-78f047795e45)
 
-<img width="1086" height="868" alt="image" src="https://github.com/user-attachments/assets/d2e04554-1f4f-4bce-8366-f8d3ace8b94b" />
+![WhatsApp Image 2025-11-25 at 10 52 02_a81e373f](https://github.com/user-attachments/assets/ef5f5c3f-bd00-4b61-9d0c-3dddeab6c109)
 
-<img width="1160" height="690" alt="image" src="https://github.com/user-attachments/assets/6c210117-50a5-477e-be95-fbdb304fa5e4" />
-
-<img width="1166" height="754" alt="image" src="https://github.com/user-attachments/assets/cfa3190b-b55c-4b9b-9c08-f36243914513" />
+![WhatsApp Image 2025-11-25 at 10 52 41_9d1c9183](https://github.com/user-attachments/assets/f516db7e-fba5-4757-b152-f679d680b3f0)
 
 
 __Result:__
